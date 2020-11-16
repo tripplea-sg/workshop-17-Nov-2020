@@ -23,6 +23,9 @@ show databases;
 mysqlsh root@localhost:3306 --sql -e "source /home/opc/script/sakila-schema.sql"
 mysqlsh root@localhost:3306 --sql -e "source /home/opc/script/sakila-data.sql"
 mysqlsh root@localhost:3306 --sql -e "source /home/opc/script/world_x.sql"
+```
+## The Power of MySQL Shell
+```
 mysqlsh root@localhost:3306 --sql -e "show databases;"
 mysqlsh root@localhost:33060 -i -e "session.getSchemas()"
 mysqlsh root@localhost:33060 -i --py -e "session.get_schemas()"
