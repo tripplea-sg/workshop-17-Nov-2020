@@ -110,4 +110,11 @@ mysqlsh gradmin:grpass@localhost:6446 --sql -e "insert into dummy.test values (8
 mysqlsh gradmin:grpass@localhost:3306 --sql -e "select * from dummy.test;"
 mysqlsh gradmin:grpass@localhost:3308 --sql -e "select * from dummy.test;"
 ```
-
+When 3307 comes up
+```
+mysqld_safe --defaults-file=$HOME/config/3307.cnf &
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.status()"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.removeInstance('gradmin:grpass@localhost:3307', {'force':true}); x.status()"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.addInstance('gradmin:grpass@localhost:3307'); x.status()"
+```
