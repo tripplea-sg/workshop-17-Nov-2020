@@ -85,6 +85,19 @@ cat $HOME/config/backup/differential/<sub-directory-incremental-backup>/meta/bac
 mysqlbinlog /home/opc/data/3306/bin.000002 --start-position=1712477 | mysql -uroot -h127.0.0.1 -P3307
 mysqlsh root@localhost:3307 --sql -e "select * from dummy.backup_trace;"
 ```
+## Cloning from 3306 to 3308
+```
+mysqlsh root@localhost:3306 --sql -e "install plugin clone soname 'mysql_clone.so'"
+mysqlsh root@localhost:3306 --sql -e "create user clone@'%' identified by 'clone'; grant backup_admin on *.* to clone@'%'"
+mysqld --defaults-file=/home/opc/config/3308.cnf --initialize-insecure
+mysqld_safe --defaults-file=/home/opc/config/3308.cnf &
+mysqlsh root@localhost:3308 --sql -e "show databases"
+mysqlsh root@localhost:3308 --sql -e "install plugin clone soname 'mysql_clone.so'"
+mysqlsh root@localhost:3308 --sql -e "set global clone_valid_donor_list='127.0.0.1:3306'"
+mysqlsh root@localhost:3308 --sql -e "clone instance from clone@'127.0.0.1':3306 identified by 'clone'"
+mysqlsh root@localhost:3308 --sql -e "show databases"
+mysqlsh root@localhost:3308 --sql -e "select * from dummy.backup_trace;"
+```
 
 
 
