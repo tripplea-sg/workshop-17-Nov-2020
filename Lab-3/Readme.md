@@ -69,3 +69,40 @@ How about if 3308 comes up ?
 mysqld_safe --defaults-file=$HOME/config/3308.cnf &
 mysqlsh gradmin:grpass@localhost:3306 -- cluster status
 ```
+Switch to Multi Primary mode and switch back to single primary mode
+```
+mysqlsh gradmin:grpass@localhost:3306 -- cluster switchToMultiPrimaryMode
+mysqlsh gradmin:grpass@localhost:3306 -- cluster status
+mysqlsh gradmin:grpass@localhost:3306 -- cluster switchToSinglePrimaryMode
+mysqlsh gradmin:grpass@localhost:3306 -- cluster status
+```
+Set cluster consistency
+```
+mysqlsh gradmin:grpass@localhost:3306 -- cluster setOption 'consistency' 'AFTER'
+mysqlsh gradmin:grpass@localhost:3306 -- cluster setOption 'consistency' 'BEFORE'
+mysqlsh gradmin:grpass@localhost:3306 -- cluster setOption 'consistency' 'BEFORE_AND_AFTER'
+mysqlsh gradmin:grpass@localhost:3306 -- cluster setOption 'consistency' 'EVENTUAL'
+```
+How to recover from loss of quorum
+```
+ps -ef | grep mysqld | grep -v mysqld_safe.  # terminate 3307, 3308 
+kill -9 <3307 PID> <3308 PID>
+mysqlsh gradmin:grpass@localhost:3306 -- cluster status
+mysqlsh gradmin:grpass@localhost:3306 -- cluster forceQuorumUsingPartitionOf gradmin:grpass@localhost:3306
+mysqld_safe --defaults-file=$HOME/config/3307.cnf &
+mysqld_safe --defaults-file=$HOME/config/3308.cnf &
+mysqlsh gradmin:grpass@localhost:3306 -- cluster rejoinInstance gradmin:grpass@localhost:3307
+mysqlsh gradmin:grpass@localhost:3306 -- cluster rejoinInstance gradmin:grpass@localhost:3308
+mysqlsh gradmin:grpass@localhost:3306 -- cluster status
+```
+How to shutdown and startup cluster
+```
+mysqladmin -uroot -h127.0.0.1 -P3307 shutdown
+mysqladmin -uroot -h127.0.0.1 -P3308 shutdown
+mysqladmin -uroot -h127.0.0.1 -P3306 shutdown
+mysqld_safe --defaults-file=$HOME/config/3306.cnf &
+mysqld_safe --defaults-file=$HOME/config/3307.cnf &
+mysqld_safe --defaults-file=$HOME/config/3308.cnf &
+mysqlsh gradmin:grpass@localhost:3306 -- dba rebootClusterFromCompleteOutage
+
+```
