@@ -57,8 +57,57 @@ mysqld_safe --defaults-file=$HOME/config/3308.cnf &
 mysqlsh root@localhost:3306 --sql -e "drop user gradmin@'%'"
 mysqlsh root@localhost:3307 --sql -e "set persist super_read_only=off; drop user gradmin@'%'"
 mysqlsh root@localhost:3308 --sql -e "set persist super_read_only=off; drop user gradmin@'%'"
+mysqlsh root@localhost:3307 --sql -e "stop slave for channel 'channel1'; reset slave for channel 'channel1'"
+mysqlsh root@localhost:3308 --sql -e "stop slave for channel 'channel1'; reset slave for channel 'channel1'"
 mysqlsh -- dba configure-instance { --user=root --host=127.0.0.1 --port=3306 } --clusterAdmin=gradmin --clusterAdminPassword=grpass --interactive=false --restart=true
 mysqlsh -- dba configure-instance { --user=root --host=127.0.0.1 --port=3307 } --clusterAdmin=gradmin --clusterAdminPassword=grpass --interactive=false --restart=true
 mysqlsh -- dba configure-instance { --user=root --host=127.0.0.1 --port=3308 } --clusterAdmin=gradmin --clusterAdminPassword=grpass --interactive=false --restart=true
-
+mysqlsh gradmin:grpass@localhost:3306 -i -e "dba.createReplicaSet('myCluster)"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.status()"
+mysqlsh root@localhost:3307 --sql -e "reset replica all"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.addInstance('gradmin:grpass@localhost:3307'); x.status()"
+mysqlsh root@localhost:3308 --sql -e "reset replica all"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.addInstance('gradmin:grpass@localhost:3308'); x.status()"
+```
+Start replication on 3311
+```
+mysqlsh root@localhost:3311 --sql -e "start replica for channel 'channel1'"
+mysqlsh root@localhost:3311 --sql -e "show replica status for channel 'channel1' \G"
+mysqlsh root@localhost:3306 --sql -e "insert into dummy.test values (6)"
+mysqlsh root@localhost:3307 --sql -e "select * from dummy.test"
+mysqlsh root@localhost:3308 --sql -e "select * from dummy.test"
+mysqlsh root@localhost:3311 --sql -e "select * from dummy.test"
+```
+Setup Router
+```
+mysqlrouter --bootstrap gradmin:grpass@localhost:3306 --directory router
+router/start.sh
+mysqlsh gradmin:grpass@localhost:6447 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select @@port"
+```
+Try failover primary node to 3307
+```
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.setPrimaryInstance('gradmin:grpass@localhost:3307'); x.status()"
+mysqlsh gradmin:grpass@localhost:6447 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select @@port"
+```
+If primary is down
+```
+mysqladmin -uroot -h127.0.0.1 -P3307 shutdown
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.status()"
+mysqlsh gradmin:grpass@localhost:6447 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:3306 -i -e "var x = dba.getReplicaSet(); x.forcePrimaryInstance('gradmin:grpass@localhost:3308'); x.status()"
+mysqlsh gradmin:grpass@localhost:6447 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select @@port"
+mysqlsh gradmin:grpass@localhost:3306 --sql -e "insert into dummy.test values (7)"
+mysqlsh gradmin:grpass@localhost:3308 --sql -e "insert into dummy.test values (7)"
+mysqlsh root@localhost:3308 --sql -e "grant insert on dummy.* to gradmin@'%'"
+mysqlsh gradmin:grpass@localhost:3308 --sql -e "insert into dummy.test values (7)"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "select * from dummy.test;"
+mysqlsh gradmin:grpass@localhost:6447 --sql -e "select * from dummy.test;"
+mysqlsh gradmin:grpass@localhost:6446 --sql -e "insert into dummy.test values (8)"
+mysqlsh gradmin:grpass@localhost:3306 --sql -e "select * from dummy.test;"
+mysqlsh gradmin:grpass@localhost:3308 --sql -e "select * from dummy.test;"
+```
 
