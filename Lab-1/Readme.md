@@ -44,5 +44,19 @@ ls /home/opc/config/backup
 time mysqlbackup --user=root --host=127.0.0.1 --port=3306 --backup-dir=/home/opc/config/backup --read-threads=6 --process-threads=6 --write-threads=6 --limit-memory=300 --skip-unused-pages --with-timestamp backup-and-apply-log
 ls /home/opc/config/backup
 mysqlbackup --user=root --host=127.0.0.1 --port=3306 --backup-dir=/home/opc/config/backup backup-and-apply-log
+mysqlsh root@localhost:3306 --sql -e "select * from mysql.backup_history \G;"
+mysqlsh root@localhost:3306 --sql -e "select * from mysql.backup_progress \G"
 ```
+## Incremental Backup
+```
+mkdir /home/opc/config/backup/incremental
+mysqlsh root@localhost:3306 --sql -e "create database dummy; create table dummy.backup_trace (i varchar(100)); insert into dummy.backup_trace values ('before incremental')"
+mysqlsh root@localhost:3306 --sql -e "select * from dummy.backup_trace;"
+mysqlbackup --user=root --host=127.0.0.1 --port=3306 --incremental --incremental-backup-dir=/home/opc/config/backup --with-timestamp --incremental-base=history:last_backup backup
+mysqlsh root@localhost:3306 --sql -e "select * from mysql.backup_history \G;"
+```
+## Differential Backup
+```
+
+
 
