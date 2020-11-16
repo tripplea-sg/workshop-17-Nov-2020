@@ -36,4 +36,13 @@ mysqlsh root@localhost:33060 -i -e "session.getSchema('world_x').getCollection('
 mysqlsh root@localhost:33060 -i -e "session.getSchema('world_x').getCollection('countryinfo').find().limit(2)"
 mysqlsh root@localhost:33060 --sql --schema=world_x -e "SELECT JSON_OBJECT('Name', doc->>'$.Name', 'Population', doc->>'$.demographics.Population', 'SurfaceArea', doc->>'$.geography.SurfaceArea') AS results FROM countryinfo WHERE doc->>'$.Name' LIKE 'J%' AND doc->>'$.geography.Continent' = 'Asia';"
 ```
+## Full Backup using MEB
+```
+mkdir /home/opc/config/backup
+time mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup –-with-timestamp backup-and-apply-log
+ls /home/opc/config/backup
+time mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup --read-threads=6 --process-threads=6 --write-threads=6 --limit-memory=300 --skip-unused-pages –-with-timestamp backup-and-apply-log
+ls /home/opc/config/backup
+mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup backup-and-apply-log
+```
 
