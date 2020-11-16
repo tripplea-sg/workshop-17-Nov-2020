@@ -39,10 +39,10 @@ mysqlsh root@localhost:33060 --sql --schema=world_x -e "SELECT JSON_OBJECT('Name
 ## Full Backup using MEB
 ```
 mkdir /home/opc/config/backup
-time mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup –-with-timestamp backup-and-apply-log
+time mysqlbackup --user=root --host=127.0.0.1 --port=3306 --backup-dir=/home/opc/config/backup --with-timestamp backup-and-apply-log
 ls /home/opc/config/backup
-time mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup --read-threads=6 --process-threads=6 --write-threads=6 --limit-memory=300 --skip-unused-pages –-with-timestamp backup-and-apply-log
+time mysqlbackup --user=root --host=127.0.0.1 --port=3306 --backup-dir=/home/opc/config/backup --read-threads=6 --process-threads=6 --write-threads=6 --limit-memory=300 --skip-unused-pages --with-timestamp backup-and-apply-log
 ls /home/opc/config/backup
-mysqlbackup –-user=root –-password=root --host=127.0.0.1 –-port=3306 –-backup-dir=/home/opc/config/backup backup-and-apply-log
+mysqlbackup --user=root --host=127.0.0.1 --port=3306 --backup-dir=/home/opc/config/backup backup-and-apply-log
 ```
 
